@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Skycast — Philippine Weather</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+    [data-theme="dark"]   { --bg:#0a0e1a; --surface:#111827; --surface2:#1a2235; --border:rgba(255,255,255,0.07); --accent:#38bdf8; --accent2:#818cf8; --text:#f1f5f9; --text2:#94a3b8; --muted:#475569; --shadow:rgba(0,0,0,0.5); --font:'Syne',sans-serif; --mono:'DM Mono',monospace; }
+    [data-theme="light"]  { --bg:#f0f4f8; --surface:#ffffff; --surface2:#f1f5f9; --border:rgba(0,0,0,0.08); --accent:#0284c7; --accent2:#6366f1; --text:#0f172a; --text2:#475569; --muted:#94a3b8; --shadow:rgba(0,0,0,0.1); --font:'Syne',sans-serif; --mono:'DM Mono',monospace; }
+    [data-theme="sunset"] { --bg:#1a0a0f; --surface:#2a1218; --surface2:#341820; --border:rgba(255,150,100,0.1); --accent:#f97316; --accent2:#ec4899; --text:#fef3c7; --text2:#fbbf24; --muted:#92400e; --shadow:rgba(0,0,0,0.6); --font:'Playfair Display',serif; --mono:'DM Mono',monospace; }
+    [data-theme="nature"] { --bg:#0d1a10; --surface:#162318; --surface2:#1c2e1f; --border:rgba(100,200,100,0.1); --accent:#4ade80; --accent2:#34d399; --text:#f0fdf4; --text2:#86efac; --muted:#166534; --shadow:rgba(0,0,0,0.5); --font:'Nunito',sans-serif; --mono:'DM Mono',monospace; }
+
+    body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; transition:background .3s,color .3s; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1; transition:background .3s; }
+    [data-theme="dark"]   body::before { background:radial-gradient(ellipse 70% 40% at 15% -5%,rgba(56,189,248,.1) 0%,transparent 60%),radial-gradient(ellipse 50% 35% at 85% 105%,rgba(129,140,248,.08) 0%,transparent 60%); }
+    [data-theme="light"]  body::before { background:radial-gradient(ellipse 70% 40% at 15% -5%,rgba(2,132,199,.06) 0%,transparent 60%),radial-gradient(ellipse 50% 35% at 85% 105%,rgba(99,102,241,.05) 0%,transparent 60%); }
+    [data-theme="sunset"] body::before { background:radial-gradient(ellipse 70% 40% at 15% -5%,rgba(249,115,22,.12) 0%,transparent 60%),radial-gradient(ellipse 50% 35% at 85% 105%,rgba(236,72,153,.1) 0%,transparent 60%); }
+    [data-theme="nature"] body::before { background:radial-gradient(ellipse 70% 40% at 15% -5%,rgba(74,222,128,.1) 0%,transparent 60%),radial-gradient(ellipse 50% 35% at 85% 105%,rgba(52,211,153,.08) 0%,transparent 60%); }
+
+    .container { max-width:960px; margin:0 auto; padding:36px 20px 80px; }
+
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:14px; }
+    .logo { font-size:1.85rem; font-weight:800; letter-spacing:-.04em; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .logo-sub { font-family:var(--mono); font-size:.68rem; color:var(--muted); letter-spacing:.1em; margin-left:8px; }
+    .theme-row { display:flex; align-items:center; gap:8px; }
+    .theme-label { font-family:var(--mono); font-size:.65rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+    .theme-btn { width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform .2s,border-color .2s; }
+    .theme-btn:hover { transform:scale(1.15); }
+    .theme-btn.active { border-color:var(--text); transform:scale(1.1); }
+    .theme-btn[data-t="dark"]   { background:linear-gradient(135deg,#0a0e1a,#38bdf8); }
+    .theme-btn[data-t="light"]  { background:linear-gradient(135deg,#f0f4f8,#0284c7); }
+    .theme-btn[data-t="sunset"] { background:linear-gradient(135deg,#1a0a0f,#f97316); }
+    .theme-btn[data-t="nature"] { background:linear-gradient(135deg,#0d1a10,#4ade80); }
+
+    .tabs { display:flex; border-bottom:1px solid var(--border); }
+    .tab { font-family:var(--mono); font-size:.75rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); background:none; border:none; padding:10px 18px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .2s,border-color .2s; }
+    .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .tab-panel { display:none; padding:16px 0 6px; }
+    .tab-panel.active { display:block; animation:fadeUp .3s ease both; }
+
+    .row { display:flex; gap:10px; }
+    .input-text { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; font-family:var(--font); font-size:.93rem; color:var(--text); outline:none; transition:border-color .2s; }
+    .input-text::placeholder { color:var(--muted); }
+    .input-text:focus { border-color:var(--accent); }
+    .btn-search { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:12px; padding:12px 24px; font-family:var(--font); font-size:.88rem; font-weight:700; color:#fff; cursor:pointer; transition:opacity .2s,transform .1s; white-space:nowrap; }
+    [data-theme="light"] .btn-search { color:#0f172a; }
+    .btn-search:hover { opacity:.88; }
+    .btn-search:active { transform:scale(.97); }
+
+    .dd-grid { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+    .dd-group { display:flex; flex-direction:column; gap:5px; }
+    .dd-group label { font-family:var(--mono); font-size:.64rem; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; }
+    .dd-select { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 32px 11px 13px; font-family:var(--font); font-size:.85rem; color:var(--text); outline:none; cursor:pointer; transition:border-color .2s; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 11px center; }
+    .dd-select:focus { border-color:var(--accent); }
+    .dd-select:disabled { opacity:.38; cursor:not-allowed; }
+
+    .error { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:10px; padding:11px 15px; color:#fca5a5; font-family:var(--mono); font-size:.82rem; margin-bottom:18px; display:none; }
+    .spinner { display:none; width:26px; height:26px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:38px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(13px)} to{opacity:1;transform:translateY(0)} }
+
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:26px 30px; margin-bottom:13px; display:none; animation:fadeUp .4s ease both; transition:background .3s; }
+    .city-row { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .city-name { font-size:1.85rem; font-weight:800; letter-spacing:-.03em; line-height:1; }
+    .city-sub  { font-family:var(--mono); font-size:.72rem; color:var(--text2); margin-top:4px; letter-spacing:.06em; }
+    .badge     { font-family:var(--mono); font-size:.78rem; color:var(--accent); background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.18); padding:5px 13px; border-radius:999px; align-self:center; }
+    .temp-row  { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+    .temp-big  { font-size:4.6rem; font-weight:800; letter-spacing:-.05em; line-height:1; background:linear-gradient(135deg,var(--text) 40%,var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .wicon     { width:66px; height:66px; filter:drop-shadow(0 0 10px rgba(56,189,248,.35)); }
+    .feels     { font-family:var(--mono); font-size:.73rem; color:var(--text2); margin-top:4px; }
+    .unit-tog  { display:inline-flex; background:var(--surface2); border:1px solid var(--border); border-radius:999px; padding:3px; margin-top:7px; }
+    .unit-btn  { background:none; border:none; padding:3px 10px; border-radius:999px; cursor:pointer; color:var(--muted); font-family:var(--mono); font-size:.7rem; transition:background .15s,color .15s; }
+    .unit-btn.active { background:var(--accent); color:#fff; }
+    .stats     { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:10px; }
+    .stat      { background:var(--surface2); border:1px solid var(--border); border-radius:13px; padding:13px 15px; }
+    .stat-lbl  { font-family:var(--mono); font-size:.62rem; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
+    .stat-val  { font-size:1.3rem; font-weight:700; letter-spacing:-.02em; }
+    .stat-unit { font-family:var(--mono); font-size:.7rem; color:var(--text2); margin-left:2px; }
+
+    .sec-title { font-family:var(--mono); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:11px; }
+    .fc-grid   { display:grid; grid-template-columns:repeat(5,1fr); gap:9px; }
+    .fc-card   { background:var(--surface); border:1px solid var(--border); border-radius:15px; padding:13px 7px; text-align:center; display:none; animation:fadeUp .4s ease both; transition:transform .15s,background .2s; }
+    .fc-card:hover { transform:translateY(-2px); background:var(--surface2); }
+    .fc-day    { font-family:var(--mono); font-size:.62rem; color:var(--muted); letter-spacing:.06em; margin-bottom:6px; }
+    .fc-icon   { width:36px; height:36px; margin:0 auto 6px; }
+    .fc-max    { font-size:.97rem; font-weight:700; }
+    .fc-min    { font-family:var(--mono); font-size:.72rem; color:var(--text2); }
+    .fc-desc   { font-family:var(--mono); font-size:.58rem; color:var(--accent2); margin-top:4px; text-transform:capitalize; }
+
+    .map-wrap  { display:none; margin-top:13px; animation:fadeUp .4s ease both; }
+    #map       { width:100%; height:290px; border-radius:18px; border:1px solid var(--border); }
+    .leaflet-popup-content-wrapper { background:var(--surface2)!important; border:1px solid var(--border)!important; color:var(--text)!important; border-radius:12px!important; font-family:var(--mono)!important; font-size:.78rem!important; box-shadow:0 8px 24px var(--shadow)!important; }
+    .leaflet-popup-tip { background:var(--surface2)!important; }
+    .leaflet-popup-close-button { color:var(--muted)!important; }
+    .leaflet-control-attribution { background:rgba(0,0,0,.65)!important; color:var(--muted)!important; font-size:.58rem!important; }
+    .leaflet-control-attribution a { color:var(--accent)!important; }
+
+    .empty     { text-align:center; padding:58px 20px; color:var(--muted); }
+    .empty-ico { font-size:2.8rem; margin-bottom:12px; }
+    .empty-txt { font-family:var(--mono); font-size:.82rem; line-height:1.85; }
+
+    @media(max-width:660px){ .dd-grid{grid-template-columns:1fr 1fr} .fc-grid{grid-template-columns:repeat(3,1fr)} .temp-big{font-size:3.3rem} }
+    @media(max-width:400px){ .dd-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div style="display:flex;align-items:baseline">
+      <span class="logo">Skycast</span>
+      <span class="logo-sub">// Philippines Weather</span>
+    </div>
+    <div class="theme-row">
+      <span class="theme-label">Theme</span>
+      <button class="theme-btn" data-t="dark"   title="Dark"   onclick="setTheme('dark')"></button>
+      <button class="theme-btn" data-t="light"  title="Light"  onclick="setTheme('light')"></button>
+      <button class="theme-btn" data-t="sunset" title="Sunset" onclick="setTheme('sunset')"></button>
+      <button class="theme-btn" data-t="nature" title="Nature" onclick="setTheme('nature')"></button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('text')">Type City</button>
+    <button class="tab"        onclick="switchTab('ph')">Browse Philippines</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-text">
+    <div class="row">
+      <input class="input-text" id="cityInput" type="text" placeholder="e.g. Cebu, Davao, Quezon City, Baguio..." autocomplete="off"/>
+      <button class="btn-search" onclick="searchText()">Search</button>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-ph">
+    <div class="dd-grid">
+      <div class="dd-group">
+        <label>Region</label>
+        <select class="dd-select" id="regionSel" onchange="onRegion()">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="dd-group">
+        <label>Province</label>
+        <select class="dd-select" id="provinceSel" onchange="onProvince()" disabled>
+          <option value="">Select region first</option>
+        </select>
+      </div>
+      <div class="dd-group">
+        <label>City / Municipality</label>
+        <select class="dd-select" id="citySel" disabled>
+          <option value="">Select province first</option>
+        </select>
+      </div>
+      <button class="btn-search" style="height:42px;align-self:end" onclick="searchPH()">Go</button>
+    </div>
+  </div>
+
+  <div class="error" id="errMsg"></div>
+  <div class="spinner" id="spinner"></div>
+
+  <div class="card" id="mainCard">
+    <div class="city-row">
+      <div>
+        <div class="city-name" id="cityName"></div>
+        <div class="city-sub"  id="citySub"></div>
+      </div>
+      <div class="badge" id="wDesc"></div>
+    </div>
+    <div class="temp-row">
+      <div>
+        <div class="temp-big"><span id="temp"></span>&deg;<span id="unitLbl">C</span></div>
+        <div class="feels">Feels like <span id="feels"></span>&deg;<span class="usub">C</span></div>
+        <div class="unit-tog">
+          <button class="unit-btn active" onclick="setUnit('C')">&deg;C</button>
+          <button class="unit-btn"        onclick="setUnit('F')">&deg;F</button>
+        </div>
+      </div>
+      <img class="wicon" id="wIcon" src="" alt=""/>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-lbl">Humidity</div><div class="stat-val"><span id="humidity"></span><span class="stat-unit">%</span></div></div>
+      <div class="stat"><div class="stat-lbl">Wind</div><div class="stat-val"><span id="wind"></span><span class="stat-unit">km/h</span></div></div>
+      <div class="stat"><div class="stat-lbl">Pressure</div><div class="stat-val"><span id="pressure"></span><span class="stat-unit">hPa</span></div></div>
+      <div class="stat"><div class="stat-lbl">Visibility</div><div class="stat-val"><span id="visibility"></span><span class="stat-unit">km</span></div></div>
+    </div>
+  </div>
+
+  <div id="fcSection" style="display:none">
+    <div class="sec-title">5-day forecast</div>
+    <div class="fc-grid" id="fcGrid"></div>
+  </div>
+
+  <div class="map-wrap" id="mapWrap">
+    <div class="sec-title">location</div>
+    <div id="map"></div>
+  </div>
+
+  <div class="empty" id="empty">
+    <div class="empty-ico">🌤</div>
+    <div class="empty-txt">Search any Philippine city<br/>or browse by region above.</div>
+  </div>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ── ALL VARIABLES DECLARED FIRST ──────────────────────
+var TABS   = ['text', 'ph'];
+var TILES  = {
+  dark:   'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  light:  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  sunset: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  nature: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+};
+var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
+var unit = 'C';
+var lastC = null, lastFeelsC = null, lastFc = [];
+var map = null, marker = null, tile = null;
+
+// ── HELPERS ────────────────────────────────────────────
+function ge(id) { return document.getElementById(id); }
+function show(el, d) { el.style.display = d || 'block'; }
+function hide(el) { el.style.display = 'none'; }
+function toF(c) { return Math.round(c * 9/5 + 32); }
+function dayLbl(ds) {
+  var d = new Date(ds + 'T12:00:00');
+  return d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+}
+function showErr(m) { ge('errMsg').textContent = m; show(ge('errMsg')); }
+
+// ── THEME ──────────────────────────────────────────────
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-t') === t);
+  });
+  localStorage.setItem('skycast-theme', t);
+  if (map) updateTiles(t);
+}
+
+// ── TABS ───────────────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(function(b, i) {
+    b.classList.toggle('active', TABS[i] === t);
+  });
+  TABS.forEach(function(id) {
+    ge('tab-' + id).classList.toggle('active', id === t);
+  });
+}
+
+// ── UNIT ───────────────────────────────────────────────
+function setUnit(u) {
+  unit = u;
+  document.querySelectorAll('.unit-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === '\u00b0' + u);
+  });
+  document.querySelectorAll('#unitLbl, .usub').forEach(function(el) {
+    el.textContent = u;
+  });
+  if (lastC !== null) {
+    ge('temp').textContent  = u === 'C' ? lastC  : toF(lastC);
+    ge('feels').textContent = u === 'C' ? lastFeelsC : toF(lastFeelsC);
+  }
+  if (lastFc.length) renderFc(lastFc);
+}
+
+// ── PH DROPDOWNS ───────────────────────────────────────
+async function loadRegions() {
+  var r = await fetch('/ph/regions');
+  var d = await r.json();
+  var s = ge('regionSel');
+  s.innerHTML = '<option value="">— Select Region —</option>';
+  d.forEach(function(v) {
+    var o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    s.appendChild(o);
+  });
+}
+
+async function onRegion() {
+  var region = ge('regionSel').value;
+  var ps = ge('provinceSel'), cs = ge('citySel');
+  ps.innerHTML = '<option value="">Loading...</option>'; ps.disabled = true;
+  cs.innerHTML = '<option value="">Select province first</option>'; cs.disabled = true;
+  if (!region) return;
+  var r = await fetch('/ph/provinces?region=' + encodeURIComponent(region));
+  var d = await r.json();
+  ps.innerHTML = '<option value="">— Select Province —</option>';
+  d.forEach(function(v) {
+    var o = document.createElement('option'); o.value = v; o.textContent = v; ps.appendChild(o);
+  });
+  ps.disabled = false;
+}
+
+async function onProvince() {
+  var region = ge('regionSel').value, province = ge('provinceSel').value;
+  var cs = ge('citySel');
+  cs.innerHTML = '<option value="">Loading...</option>'; cs.disabled = true;
+  if (!province) return;
+  var r = await fetch('/ph/cities?region=' + encodeURIComponent(region) + '&province=' + encodeURIComponent(province));
+  var d = await r.json();
+  cs.innerHTML = '<option value="">— Select City —</option>';
+  d.forEach(function(v) {
+    var o = document.createElement('option'); o.value = v; o.textContent = v; cs.appendChild(o);
+  });
+  cs.disabled = false;
+}
+
+function searchPH() {
+  var city = ge('citySel').value;
+  if (!city) { showErr('Please select a city from the dropdowns.'); return; }
+  fetchWeather('/weather?city=' + encodeURIComponent(city) + '&country=PH');
+}
+
+// ── TEXT SEARCH ────────────────────────────────────────
+function searchText() {
+  var city = ge('cityInput').value.trim();
+  if (!city) return;
+  fetchWeather('/weather?city=' + encodeURIComponent(city) + '&country=PH');
+}
+
+// ── FETCH WEATHER ──────────────────────────────────────
+async function fetchWeather(url) {
+  hide(ge('errMsg')); hide(ge('mainCard')); hide(ge('fcSection'));
+  hide(ge('mapWrap')); hide(ge('empty'));
+  show(ge('spinner'));
+  try {
+    var res = await fetch(url);
+    var d = await res.json();
+    hide(ge('spinner'));
+    if (!res.ok) { showErr(d.error || 'Something went wrong.'); return; }
+
+    lastC = d.temperature; lastFeelsC = d.feels_like; lastFc = d.forecast;
+
+    ge('cityName').textContent   = d.city;
+    ge('citySub').textContent    = d.country + ' \u00b7 Updated just now';
+    ge('wDesc').textContent      = d.description;
+    ge('temp').textContent       = unit === 'C' ? d.temperature : toF(d.temperature);
+    ge('feels').textContent      = unit === 'C' ? d.feels_like  : toF(d.feels_like);
+    ge('wIcon').src              = 'https://openweathermap.org/img/wn/' + d.icon + '@2x.png';
+    ge('humidity').textContent   = d.humidity;
+    ge('wind').textContent       = d.wind_speed;
+    ge('pressure').textContent   = d.pressure;
+    ge('visibility').textContent = d.visibility;
+    show(ge('mainCard'));
+
+    renderFc(d.forecast);
+    show(ge('fcSection'));
+    initMap(d.lat, d.lon, d.city, d.temperature, d.description, d.icon);
+    setTimeout(function() { if (map) map.invalidateSize(); }, 110);
+  } catch(e) {
+    hide(ge('spinner')); showErr('Network error. Is Flask running?');
+  }
+}
+
+function renderFc(fc) {
+  var g = ge('fcGrid'); g.innerHTML = '';
+  fc.forEach(function(day, i) {
+    var mx = unit === 'C' ? Math.round(day.temp_max) : toF(day.temp_max);
+    var mn = unit === 'C' ? Math.round(day.temp_min) : toF(day.temp_min);
+    var c = document.createElement('div');
+    c.className = 'fc-card';
+    c.style.animationDelay = (i * 0.06) + 's';
+    c.innerHTML =
+      '<div class="fc-day">' + dayLbl(day.date) + '</div>' +
+      '<img class="fc-icon" src="https://openweathermap.org/img/wn/' + day.icon + '@2x.png"/>' +
+      '<div class="fc-max">' + mx + '&deg;</div>' +
+      '<div class="fc-min">' + mn + '&deg;</div>' +
+      '<div class="fc-desc">' + day.description + '</div>';
+    g.appendChild(c);
+    show(c, 'block');
+  });
+}
+
+// ── MAP ────────────────────────────────────────────────
+function updateTiles(t) {
+  if (!map || !tile) return;
+  map.removeLayer(tile);
+  tile = L.tileLayer(TILES[t] || TILES.dark, {attribution:ATTR, subdomains:'abcd', maxZoom:19}).addTo(map);
+}
+
+function initMap(lat, lon, name, temp, desc, icon) {
+  var t = document.documentElement.getAttribute('data-theme') || 'dark';
+  show(ge('mapWrap'));
+  if (!map) {
+    map = L.map('map').setView([lat, lon], 11);
+    tile = L.tileLayer(TILES[t], {attribution:ATTR, subdomains:'abcd', maxZoom:19}).addTo(map);
+  } else {
+    map.setView([lat, lon], 11);
+    updateTiles(t);
+  }
+  var pinHtml = '<div style="width:42px;height:42px;background:linear-gradient(135deg,#38bdf8,#818cf8);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(56,189,248,.45);display:flex;align-items:center;justify-content:center"><img src="https://openweathermap.org/img/wn/' + icon + '.png" style="transform:rotate(45deg);width:28px;height:28px"/></div>';
+  var pin = L.divIcon({className:'', html:pinHtml, iconSize:[42,42], iconAnchor:[21,42], popupAnchor:[0,-46]});
+  if (marker) marker.remove();
+  marker = L.marker([lat, lon], {icon:pin}).addTo(map)
+    .bindPopup('<strong>' + name + '</strong><br/>' + temp + '&deg;C &middot; ' + desc)
+    .openPopup();
+}
+
+// ── INIT ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  setTheme(localStorage.getItem('skycast-theme') || 'dark');
+  ge('cityInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') searchText();
+  });
+  loadRegions();
+});
+</script>
+</body>
+</html>
