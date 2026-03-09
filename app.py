@@ -7,7 +7,7 @@ from ph_data import PH_DATA
 
 app = Flask(__name__)
 
-API_KEY  = os.environ.get("OPENWEATHER_API_KEY", "25b3a30ffc69e3526e9fc25f9a9da648")
+API_KEY  = os.environ.get("OPENWEATHER_API_KEY", "apikey")
 BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
