@@ -28,7 +28,7 @@
 
 **Skycast** is a polished weather web app that gives you instant, beautiful weather data for any city on Earth. No clutter, no noise — just clean, clear conditions at a glance.
 
-Built as a **custom commission** by [Kleia](https://github.com/kleia) with care for every detail.
+Built as a **custom commission** by [Kleia](https://github.com/LikeNmuFF) with care for every detail.
 
 ---
 
