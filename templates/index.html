@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skycast — Philippine Weather</title>
+  <link rel="icon" type="png/x-icon" href="{{ url_for('static', filename='logo.png')}}" alt="logo"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
@@ -111,10 +112,11 @@
 <div class="container">
 
   <header>
-    <div style="display:flex;align-items:baseline">
+    <a><div style="display:flex;align-items:baseline">
+      <img src="{{ url_for('static', filename='logo.svg')}}" alt="logo" height="36">
       <span class="logo">Skycast</span>
       <span class="logo-sub">// Philippines Weather</span>
-    </div>
+    </div></a>
     <div class="theme-row">
       <span class="theme-label">Theme</span>
       <button class="theme-btn" data-t="dark"   title="Dark"   onclick="setTheme('dark')"></button>
