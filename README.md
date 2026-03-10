@@ -2,6 +2,10 @@
 
 <div align="center">
 
+<img src="static/logo.svg" alt="Skycast Logo" width="120" />
+
+<br/><br/>
+
 ![Skycast Banner](https://img.shields.io/badge/Skycast-Weather%20Dashboard-74b9ff?style=for-the-badge&logo=cloud&logoColor=white)
 &nbsp;
 ![Built by Kleia](https://img.shields.io/badge/Built%20by-Kleia-fd79a8?style=for-the-badge)
@@ -24,7 +28,7 @@
 
 **Skycast** is a polished weather web app that gives you instant, beautiful weather data for any city on Earth. No clutter, no noise — just clean, clear conditions at a glance.
 
-Built as a **custom commission** by [Kleia](https://github.com/LikeNmuFF) with care for every detail.
+Built as a **custom commission** by [Kleia](https://github.com/kleia) with care for every detail.
 
 ---
 
