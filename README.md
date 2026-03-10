@@ -1,65 +1,56 @@
-# 🌤 Skycast — Flask Weather Dashboard
+# 🌤 Skycast
 
-A weather dashboard built with Flask that shows current conditions and a 5-day forecast for any city.
+<div align="center">
 
-## Features
-- 🔍 Search any city worldwide
-- 🌡 Current temperature, feels-like, humidity, wind, pressure, visibility
-- 📅 5-day forecast with icons
-- ⚡ Powered by OpenWeatherMap API
+![Skycast Banner](https://img.shields.io/badge/Skycast-Weather%20Dashboard-74b9ff?style=for-the-badge&logo=cloud&logoColor=white)
+&nbsp;
+![Built by Kleia](https://img.shields.io/badge/Built%20by-Kleia-fd79a8?style=for-the-badge)
+&nbsp;
+![Flask](https://img.shields.io/badge/Flask-Python-0984e3?style=for-the-badge&logo=flask&logoColor=white)
+
+<br/>
+
+```
+  ☁️  ⛅  🌤  ☀️  🌦  🌧  ⛈  🌩  🌨  🌪
+```
+
+**A sleek, real-time weather dashboard — beautifully designed and custom built.**
+
+</div>
 
 ---
 
-## Setup Instructions
+## ✨ What is Skycast?
 
-### 1. Get a free API key
-1. Go to [https://openweathermap.org/api](https://openweathermap.org/api)
-2. Sign up for a free account
-3. Go to **API Keys** in your profile and copy your key
-4. ⚠️ New keys take ~10 minutes to activate
+**Skycast** is a polished weather web app that gives you instant, beautiful weather data for any city on Earth. No clutter, no noise — just clean, clear conditions at a glance.
 
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Add your API key
-Open `app.py` and replace `YOUR_API_KEY_HERE` with your actual key:
-```python
-API_KEY = "your_actual_key_here"
-```
-
-Or set it as an environment variable (more secure):
-```bash
-# Mac/Linux
-export OPENWEATHER_API_KEY="your_key_here"
-
-# Windows
-set OPENWEATHER_API_KEY=your_key_here
-```
-
-### 4. Run the app
-```bash
-python app.py
-```
-
-Open your browser at: **http://localhost:5000**
+Built as a **custom commission** by [Kleia](https://github.com/LikeNmuFF) with care for every detail.
 
 ---
 
-## Project Structure
-```
-weather-dashboard/
-├── app.py              ← Flask routes & API calls
-├── requirements.txt    ← Python dependencies
-├── README.md           ← This file
-└── templates/
-    └── index.html      ← Frontend (HTML + CSS + JS)
-```
+## 🔭 What It Does
 
-## What You'll Learn
-- **API Integration** — calling an external HTTP API with `urllib`
-- **JSON Parsing** — extracting data from nested JSON responses
-- **Flask Routing** — `@app.route` with query parameters
-- **Frontend ↔ Backend** — using `fetch()` in JS to call your Flask endpoint
-- **Environment Variables** — keeping API keys secure
+| Feature | Description |
+|---|---|
+| 🔍 **City Search** | Look up any city worldwide, instantly |
+| 🌡 **Current Conditions** | Temperature, feels-like, humidity, wind speed, pressure & visibility |
+| 📅 **5-Day Forecast** | Full week outlook with weather icons |
+| ⚡ **Live API Data** | Powered by OpenWeatherMap — always up to date |
+| 🎨 **Responsive Design** | Looks great on desktop and mobile |
+
+---
+
+## 🛠 Built by Kleia
+
+> This project was **custom built** and is **not open for free replication**.  
+> The source code is shared for **portfolio and reference purposes only**.
+
+If you'd like something similar built for you, reach out to **Kleia** directly.
+
+---
+
+<div align="center">
+
+*Crafted with ☁️ and care — © Kleia*
+
+</div>
